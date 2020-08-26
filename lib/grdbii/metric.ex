@@ -46,8 +46,8 @@ defmodule Grdbii.Metric do
         changeset = changeset(metric, Map.new([{attr, parse(result)}, {:pickle, pickle}]))
         Repo.update(changeset)
 
-      tensor ->
-        {:ok, tensor}
+      _ ->
+        {:ok, metric}
     end
   end
 

@@ -13,7 +13,7 @@ defmodule Grdbii.Application do
     ]
 
     children = [
-      # {Plug.Cowboy, scheme: :http, plug: Grdbii, options: [port: 4001]},
+      {Plug.Cowboy, scheme: :http, plug: Grdbii, options: [port: 4001]},
       :poolboy.child_spec(:python, python_config),
       {Grdbii.Repo, []}
     ]
