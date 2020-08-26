@@ -1,0 +1,15 @@
+version: '3.5'
+
+services:
+  web:
+    depends_on:
+      - postgres
+    image: grdbii:latest
+    ports:
+      - '4000:4000'
+  postgres:
+    image: postgres:latest
+    ports:
+      - '5432:5432'
+    environment:
+      - 'POSTGRES_PASSWORD=postgres'
