@@ -42,9 +42,22 @@ defmodule Grdbii.Metric do
   def calculate(%__MODULE__{pickle: pickle} = metric, attr) when attr in @calculations do
     case Map.fetch!(metric, attr) do
       nil ->
-        {result, pickle} = Python.calculate(:python, pickle, attr)
-        changeset = changeset(metric, Map.new([{attr, parse(result)}, {:pickle, pickle}]))
-        Repo.update(changeset)
+        try do
+          {result, pickle} = Python.calculate(:python, pickle, attr)
+          changeset = changeset(metric, Map.new([{attr, parse(result)}, {:pickle, pickle}]))
+          Repo.update(changeset)
+        rescue
+          reason ->
+            case reason do
+              %ErlangError{original: {:python, error, _, _}} -> handle_error(metric, attr, error)
+              _ -> :noop
+            end
+
+            raise reason
+        end
+
+      x when x in [[], ""] ->
+        {:error, :too_complex}
 
       _ ->
         {:ok, metric}
@@ -60,4 +73,16 @@ defmodule Grdbii.Metric do
   defp parse(value) when value in [[], ""], do: nil
   defp parse([h | t]) when is_list(h), do: Enum.map([h | t], &to_string/1)
   defp parse(value), do: to_string(value)
+
+  defp handle_error(metric, :ricci_scalar, :"builtins.TimeoutError") do
+    changeset = changeset(metric, %{ricci_scalar: ""})
+    Repo.update(changeset)
+  end
+
+  defp handle_error(metric, attr, :"builtins.TimeoutError") do
+    changeset = changeset(metric, Map.new([{attr, []}]))
+    Repo.update(changeset)
+  end
+
+  defp handle_error(_metric, _attr, _reason), do: :noop
 end

@@ -24,7 +24,8 @@ defmodule Grdbii.MixProject do
     [
       {:ecto_sql, "~> 3.4"},
       {:postgrex, "~> 0.15.5"},
-      {:plug_cowboy, "~> 2.0"},
+      {:plug_cowboy, "~> 2.3"},
+      {:cors_plug, "~> 2.0"},
       {:poison, "~> 4.0"},
       {:export, "~> 0.1.0"},
       {:poolboy, "~> 1.5"},

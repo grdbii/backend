@@ -1,4 +1,4 @@
-require Ecto.Query
+import Ecto.Query
 alias Grdbii.{Metric, Repo, Python}
 
 metric =
