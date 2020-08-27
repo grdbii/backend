@@ -1,49 +1,30 @@
 defmodule Grdbii do
-  alias Grdbii.{Metric, Repo}
+  alias Grdbii.{Error, Metric, Repo}
   import Ecto.Query, only: [from: 2]
   use Plug.Router
   use Plug.ErrorHandler
 
-  plug(Plug.Logger)
-  plug(CORSPlug)
+  plug Plug.Logger
+  plug CORSPlug
 
-  plug(Plug.Parsers,
+  plug Plug.Parsers,
     parsers: [:json],
     pass: ["*/*"],
     json_decoder: Poison
-  )
 
-  plug(:match)
-  plug(:dispatch)
-
-  @bad_request %{
-    code: :bad_request,
-    type: :invalid_parameter,
-    message: "Could not parse request parameter."
-  }
-
-  @timeout_error %{
-    code: :internal_server_error,
-    type: :timeout_error,
-    message: "Server timed out. Request took to long to process."
-  }
-
-  @internal_server_error %{
-    code: :internal_server_error,
-    type: :unexpected_error,
-    message: """
-    An unexpected error occured on the server, please contact the maintainer of the site.
-    """
-  }
+  plug :match
+  plug :dispatch
 
   def handle_errors(conn, %{reason: reason}) do
     resp =
       case reason do
-        %ErlangError{original: {:python, :"builtins.TimeoutError", _, _}} -> @timeout_error
-        %ArgumentError{} -> @bad_request
-        %Ecto.Query.CastError{} -> @bad_request
-        %Ecto.Query.CompileError{} -> @bad_request
-        _ -> @internal_server_error
+        %Error.TooComplex{} -> %Error.TooComplex{}
+        %Error.TimeoutError{} -> %Error.TimeoutError{}
+        %ArgumentError{} -> %Error.InvalidParameter{}
+        %FunctionClauseError{} -> %Error.InvalidParameter{}
+        %Ecto.Query.CastError{} -> %Error.InvalidParameter{}
+        %Ecto.Query.CompileError{} -> %Error.InvalidParameter{}
+        _ -> %Error.InternalError{}
       end
 
     conn
@@ -63,13 +44,12 @@ defmodule Grdbii do
       |> String.to_integer()
 
     query =
-      from(Metric,
+      from Metric,
         select: [:id, :name],
         distinct: :name,
         limit: ^limit,
         offset: ^offset,
         order_by: :id
-      )
 
     resp =
       Repo.all(query)
@@ -83,7 +63,7 @@ defmodule Grdbii do
   end
 
   get "/variants" do
-    query = from(Metric, where: [name: ^conn.params["name"]])
+    query = from Metric, where: [name: ^conn.params["name"]]
 
     resp =
       Repo.all(query)
@@ -113,7 +93,9 @@ defmodule Grdbii do
     limit = Map.get(conn.params, "limit", 7)
 
     if query == "" do
-      send_resp(conn, :no_content, "")
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(:no_content, "")
     else
       resp =
         Metric
@@ -132,21 +114,16 @@ defmodule Grdbii do
     metric = Repo.get(Metric, conn.params["id"])
     attr = String.to_existing_atom(conn.params["attr"])
 
-    case Metric.calculate(metric, attr) do
-      {:ok, result} ->
-        resp =
-          result
-          |> Map.fetch!(attr)
-          |> Poison.encode!()
+    resp =
+      metric
+      |> Metric.calculate(attr)
+      |> Map.fetch!(attr)
+      |> Poison.encode!()
 
-        conn
-        |> put_resp_content_type("application/json")
-        |> send_resp(:ok, resp)
-
-      {:error, :too_complex} ->
-        send_resp(conn, :not_acceptable, "")
-    end
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(:ok, resp)
   end
 
-  match(_, do: send_resp(conn, :not_found, "Unknown request"))
+  match _, do: send_resp(conn, :not_found, "Unknown request")
 end
