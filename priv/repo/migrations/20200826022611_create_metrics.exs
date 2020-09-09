@@ -4,6 +4,7 @@ defmodule Grdbii.Repo.Migrations.CreateMetrics do
   def change do
     create table(:metrics) do
       add :name, :string
+      add :coordinate_type, :string
 
       add :pickle, :binary
 

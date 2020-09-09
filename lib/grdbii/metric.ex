@@ -14,26 +14,27 @@ defmodule Grdbii.Metric do
   ]
 
   schema "metrics" do
-    field(:name, :string)
+    field :name, :string
+    field :coordinate_type, :string
 
-    field(:pickle, :binary)
+    field :pickle, :binary
 
-    field(:line_element, :string)
-    field(:metric, {:array, :string})
-    field(:coordinates, {:array, :string})
-    field(:variables, {:array, :string})
-    field(:functions, {:array, :string})
+    field :line_element, :string
+    field :metric, {:array, :string}
+    field :coordinates, {:array, :string}
+    field :variables, {:array, :string}
+    field :functions, {:array, :string}
 
-    field(:symmetries, {:array, :string})
-    field(:references, {:array, :string})
-    field(:notes, {:array, :string})
+    field :symmetries, {:array, :string}
+    field :references, {:array, :string}
+    field :notes, {:array, :string}
 
-    field(:christoffel, {:array, :string})
-    field(:riemann, {:array, :string})
-    field(:weyl, {:array, :string})
-    field(:einstein, {:array, :string})
-    field(:ricci_tensor, {:array, :string})
-    field(:ricci_scalar, :string)
+    field :christoffel, {:array, :string}
+    field :riemann, {:array, :string}
+    field :weyl, {:array, :string}
+    field :einstein, {:array, :string}
+    field :ricci_tensor, {:array, :string}
+    field :ricci_scalar, :string
   end
 
   def changeset(%__MODULE__{} = metric, params \\ %{}) do

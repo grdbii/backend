@@ -63,7 +63,7 @@ defmodule Grdbii do
   end
 
   get "/variants" do
-    query = from Metric, where: [name: ^conn.params["name"]]
+    query = from Metric, where: [name: ^conn.params["name"]], order_by: [asc: :id]
 
     resp =
       Repo.all(query)
