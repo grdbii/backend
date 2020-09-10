@@ -3,7 +3,7 @@ defmodule Grdbii.Python do
   use Export.Python
   use GenServer
 
-  @timeout 12_000
+  @timeout 60_000
 
   def start_link(opts), do: GenServer.start_link(__MODULE__, opts)
 
